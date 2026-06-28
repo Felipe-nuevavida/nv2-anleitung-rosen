@@ -34,7 +34,7 @@
       padding:3rem 1.5rem 1rem 1.5rem; position:relative; overflow:hidden;
     }
 
-    .tap-l, .tap-r { position:absolute; top:0; width:50%; height:100%; cursor:pointer; z-index:10; -webkit-tap-highlight-color: transparent; }
+    .tap-l, .tap-r { position:absolute; top:0; width:20%; height:100%; cursor:pointer; z-index:10; }
     .tap-l { left:0; } .tap-r { right:0; }
 
     .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; animation:fadeSlide 0.3s ease; }
@@ -63,7 +63,6 @@
       box-shadow:0 2px 12px rgba(180,130,0,0.4);
       text-decoration:none; display:inline-block; transition:all 0.2s;
       margin-top:0.3rem;
-      position:relative; z-index:20;
     }
     .support-btn:hover { transform:scale(1.04); }
     .support-btn:active { transform:scale(0.97); }
@@ -74,11 +73,11 @@
   <div class="intro" id="introScreen">
     <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/logo_gold.png" class="logo-img" alt="Nueva Vida">
     <div class="lang-row">
-      <button class="lang-btn" onclick="startGuide('de' )">🇩🇪</button>
-      <button class="lang-btn" onclick="startGuide('en')">🇬🇧</button>
-      <button class="lang-btn" onclick="startGuide('fr')">🇫🇷</button>
-      <button class="lang-btn" onclick="startGuide('es')">🇪🇸</button>
-      <button class="lang-btn" onclick="startGuide('it')">🇮🇹</button>
+      <button class="lang-btn" onclick="go('de')">🇩🇪</button>
+      <button class="lang-btn" onclick="go('en')">🇬🇧</button>
+      <button class="lang-btn" onclick="go('fr')">🇫🇷</button>
+      <button class="lang-btn" onclick="go('es')">🇪🇸</button>
+      <button class="lang-btn" onclick="go('it')">🇮🇹</button>
     </div>
   </div>
 
@@ -90,10 +89,10 @@
       <div class="seg" id="s3"></div>
     </div>
     <div class="car-content">
-      <div class="tap-l" onclick="prevSlide()"></div>
+      <div class="tap-l" onclick="prev()"></div>
       <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/logo_gold.png" class="logo-small" alt="" >
       <div id="slides" style="width:100%"></div>
-      <div class="tap-r" onclick="nextSlide( )"></div>
+      <div class="tap-r" onclick="next()"></div>
     </div>
   </div>
 </div>
@@ -134,76 +133,74 @@ const C={
 const ST={de:'Support kontaktieren',en:'Contact Support',fr:'Contacter le Support',es:'Contactar Soporte',it:'Contatta il Supporto'};
 let lang='de',cur=0,timer=null;
 
-function startGuide(l){
+function go(l){
   lang=l; cur=0;
   document.getElementById('introScreen').style.display='none';
   document.getElementById('carScreen').classList.add('active');
-  render(); 
-  showSlide(0); 
-  startTimer();
+  render(); show(0); adv();
 }
-
 function render(){
-  const c=document.getElementById('slides'); 
-  c.innerHTML='';
-  for(let i=0; i<C[lang].length; i++){
-    const s = C[lang][i];
-    const d = document.createElement('div');
-    d.className = 'slide' + (i===0 ? ' active' : '');
-    let html = '';
+  const c=document.getElementById('slides'); c.innerHTML='';
+  C[lang].forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='slide'+(i===0?' active':'');
     if(s.f){
-      html += '<div class="step-num">'+s.n+'</div><div class="divider"></div><div class="final-title">'+s.t+'</div>';
-      if(s.w) html += '<div class="warn">'+s.w+'</div>';
-      html += '<a href="mailto:info@nuevavida-ftv.de" class="support-btn">'+ST[lang]+'</a>';
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><div class="final-title">${s.t}</div>${s.w?`<div class="warn">${s.w}</div>`:''}<a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>`;
     } else {
-      html += '<div class="step-num">'+s.n+'</div><div class="divider"></div><h2>'+s.t+'</h2>';
-      if(s.b) html += '<p>'+s.b.replace(/\n/g,'  
-')+'</p>';
-      if(s.w) html += '<div class="warn">'+s.w+'</div>';
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'<br>')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
     }
-    d.innerHTML = html;
     c.appendChild(d);
-  }
+  });
 }
-
-function showSlide(i){
-  const slides = document.querySelectorAll('.slide');
-  for(let k=0; k<slides.length; k++) slides[k].classList.remove('active');
-  
-  const segs = document.querySelectorAll('.seg');
-  for(let j=0; j<segs.length; j++){
-    segs[j].classList.remove('current','done');
-    if(j<i) segs[j].classList.add('done'); 
-    else if(j===i) segs[j].classList.add('current');
-  }
-  
-  if(slides[i]) slides[i].classList.add('active');
+function show(i){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.seg').forEach((s,j)=>{
+    s.classList.remove('current','done');
+    if(j<i) s.classList.add('done'); else if(j===i) s.classList.add('current');
+  });
+  document.querySelectorAll('.slide')[i]?.classList.add('active');
 }
-
-function startTimer() {
-  clearTimeout(timer);
-  if (cur < C[lang].length - 1) {
-    timer = setTimeout(function() {
-      nextSlide();
-    }, 5000);
-  }
-}
-
-function nextSlide(){
-  if(cur < C[lang].length - 1){
+function next(){
+  if(cur<C[lang].length-1){
     cur++;
-    showSlide(cur);
-    startTimer();
+    show(cur);
+    resetAdv();
   }
+}
+function prev(){
+  if(cur>0){
+    cur--;
+    show(cur);
+    resetAdv();
+  }
+}
+function adv(){
+  if(cur<C[lang].length-1)
+    timer=setTimeout(()=>{
+      cur++;
+      show(cur);
+      adv();
+    },5000);
+}
+function resetAdv(){
+  clearTimeout(timer);
+  adv();
 }
 
-function prevSlide(){
-  if(cur > 0){
-    cur--;
-    showSlide(cur);
-    startTimer();
-  }
+// OPTIMIZADO: Pausar auto-advance solo en tap areas, sin conflicto
+const tapL = document.querySelector('.tap-l');
+const tapR = document.querySelector('.tap-r');
+
+if(tapL) {
+  tapL.addEventListener('mousedown', () => clearTimeout(timer), { passive: true });
+  tapL.addEventListener('touchstart', () => clearTimeout(timer), { passive: true });
 }
+
+if(tapR) {
+  tapR.addEventListener('mousedown', () => clearTimeout(timer), { passive: true });
+  tapR.addEventListener('touchstart', () => clearTimeout(timer), { passive: true });
+}
+
 </script>
 </body>
 </html>
