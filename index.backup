@@ -147,7 +147,8 @@ function render(){
     if(s.f){
       d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><div class="final-title">${s.t}</div>${s.w?`<div class="warn">${s.w}</div>`:''}<a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>`;
     } else {
-      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'<br>')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'  
+')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
     }
     c.appendChild(d);
   });
@@ -164,6 +165,18 @@ function next(){if(cur<C[lang].length-1){cur++;show(cur);cur<C[lang].length-1?re
 function prev(){if(cur>0){cur--;show(cur);resetAdv();}}
 function adv(){if(cur<C[lang].length-1)timer=setTimeout(()=>{next();adv();},5000);}
 function resetAdv(){clearTimeout(timer);adv();}
+
+// Lógica de Pausa al mantener pulsado (Touch y Mouse)
+// *Mejora proactiva: Se ha añadido clearTimeout(timer) y resetAdv() a tu código para que la pausa detenga realmente el avance automático en JS.
+const carScreen = document.getElementById('carScreen');
+
+carScreen.addEventListener('mousedown', () => { carScreen.classList.add('is-paused'); clearTimeout(timer); });
+carScreen.addEventListener('mouseup', () => { carScreen.classList.remove('is-paused'); resetAdv(); });
+carScreen.addEventListener('mouseleave', () => { carScreen.classList.remove('is-paused'); resetAdv(); });
+carScreen.addEventListener('touchstart', () => { carScreen.classList.add('is-paused'); clearTimeout(timer); }, { passive: true });
+carScreen.addEventListener('touchend', () => { carScreen.classList.remove('is-paused'); resetAdv(); }, { passive: true });
+carScreen.addEventListener('touchcancel', () => { carScreen.classList.remove('is-paused'); resetAdv(); }, { passive: true });
+
 </script>
 </body>
 </html>
