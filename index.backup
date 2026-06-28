@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nueva Vida - Installation Guide Rosenherzen</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: system-ui, -apple-system, sans-serif; background:#fff; overflow:hidden; }
+    .wrap { width:100%; height:100vh; display:flex; flex-direction:column; }
+
+    .intro { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:2.5rem; background:#fff; }
+    .logo-img { width:220px; height:220px; object-fit:contain; }
+    .lang-row { display:flex; gap:1.2rem; flex-wrap:wrap; justify-content:center; padding:0 1rem; }
+    .lang-btn {
+      width:95px; height:95px; border:2px solid #d4a017; background:#fff;
+      border-radius:14px; font-size:3.2rem; cursor:pointer;
+      transition:all 0.2s; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 2px 8px rgba(212,160,23,0.2);
+    }
+    .lang-btn:hover { border-color:#b8860b; transform:scale(1.08); }
+    .lang-btn:active { transform:scale(0.95); }
+
+    .car-screen { display:none; flex-direction:column; width:100%; height:100%; background:#fff; }
+    .car-screen.active { display:flex; }
+
+    .prog-bar { width:100%; height:6px; background:#f0f0f0; display:flex; flex-shrink:0; }
+    .seg { flex:1; height:100%; background:#e8d5a3; transition:background 0.3s; }
+    .seg.done { background:#d4a017; }
+    .seg.current { background:#d4a017; }
+
+    .car-content {
+      flex:1; display:flex; align-items:flex-start; justify-content:center;
+      padding:1rem 1.5rem; position:relative; overflow:hidden;
+    }
+
+    .tap-l, .tap-r { position:absolute; top:0; width:20%; height:100%; cursor:pointer; z-index:10; }
+    .tap-l { left:0; } .tap-r { right:0; }
+
+    .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; padding-top:0.5rem; animation:fadeSlide 0.3s ease; }
+    .slide.active { display:flex; }
+    @keyframes fadeSlide { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    .step-num {
+      font-size:8rem; font-weight:900; line-height:0.9;
+      background:linear-gradient(135deg,#c8a415 0%,#f5d87a 45%,#a07810 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      font-family:Georgia,serif;
+    }
+    .divider { width:70px; height:3px; background:linear-gradient(90deg,#c8a415,#f0c93a,#c8a415); border-radius:2px; }
+    .slide h2 { font-size:1.9rem; font-weight:800; color:#1a1a1a; line-height:1.2; }
+    .slide p { font-size:1.35rem; line-height:1.6; color:#333; max-width:400px; }
+    .warn { font-size:1.25rem; color:#b91c1c; font-weight:800; background:#fff1f1; border:2px solid #f5c6c6; padding:0.65rem 1.2rem; border-radius:10px; display:inline-block; }
+
+    .logo-small { position:absolute; top:10px; right:14px; width:56px; height:56px; object-fit:contain; opacity:0.75; z-index:5; pointer-events:none; }
+
+    .final-title { font-size:2.4rem; font-weight:900; color:#1a1a1a; line-height:1.2; }
+    .support-btn {
+      padding:1rem 2.5rem; font-size:1.2rem;
+      background:linear-gradient(135deg,#c8a415,#f0c93a,#a07810);
+      color:#fff; border:none; border-radius:12px; cursor:pointer;
+      font-weight:800; letter-spacing:0.03em;
+      box-shadow:0 2px 12px rgba(180,130,0,0.4);
+      text-decoration:none; display:inline-block; transition:all 0.2s;
+      margin-top:0.3rem;
+    }
+    .support-btn:hover { transform:scale(1.04); }
+    .support-btn:active { transform:scale(0.97); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="intro" id="introScreen">
+    <img src="Logo_gold.png" class="logo-img" alt="Nueva Vida" onerror="this.style.display='none'">
+    <div class="lang-row">
+      <button class="lang-btn" onclick="go('de')">🇩🇪</button>
+      <button class="lang-btn" onclick="go('en')">🇬🇧</button>
+      <button class="lang-btn" onclick="go('fr')">🇫🇷</button>
+      <button class="lang-btn" onclick="go('es')">🇪🇸</button>
+      <button class="lang-btn" onclick="go('it')">🇮🇹</button>
+    </div>
+  </div>
+
+  <div class="car-screen" id="carScreen">
+    <div class="prog-bar">
+      <div class="seg current" id="s0"></div>
+      <div class="seg" id="s1"></div>
+      <div class="seg" id="s2"></div>
+      <div class="seg" id="s3"></div>
+    </div>
+    <div class="car-content">
+      <div class="tap-l" onclick="prev()"></div>
+      <img src="Logo_gold.png" class="logo-small" alt="" onerror="this.style.display='none'">
+      <div id="slides" style="width:100%"></div>
+      <div class="tap-r" onclick="next()"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const C={
+  de:[
+    {n:'1',t:'VORBEREITUNG 🧼',b:'Motorhaube gründlich reinigen. Muss staub-, fett- und wachsfrei sein. Glasreiniger nutzen – auf frisch polierten Autos halten Saugnäpfe NICHT!',w:''},
+    {n:'2',t:'MONTAGE DER HERZEN ❤️',b:'1. Herz-Schablonen auf die Haube legen.\n2. Saugnapf-Unterseite leicht befeuchten (1 Tropfen Wasser).\n3. Rose an der Basis greifen und fest andrücken.\n⚠️ NICHT von oben auf die Blüte drücken!',w:''},
+    {n:'3',t:'SICHERHEIT & TEST ✅',b:'1. Kurzer Zugtest an jeder Rose.\n2. Alle Saugnäpfe fest kontrollieren.\n3. Zum Abnehmen: Rand des Saugnapfes anheben. Fertig!',w:'❗ MAX. 80 KM/H EMPFOHLEN'},
+    {n:'4',t:'VIEL FREUDE! 🚗💕',b:'',w:'Nueva Vida – Momente, die bleiben.',f:1}
+  ],
+  en:[
+    {n:'1',t:'PREPARATION 🧼',b:'Clean the hood thoroughly. Must be dust-, grease- and wax-free. Use glass cleaner – suction cups will NOT hold on freshly polished cars!',w:''},
+    {n:'2',t:'INSTALLING THE HEARTS ❤️',b:'1. Place heart templates on the hood.\n2. Slightly dampen suction cup underside (1 drop of water).\n3. Grip the rose at the base and press firmly.\n⚠️ NEVER press from the top on the flower!',w:''},
+    {n:'3',t:'SAFETY & TEST ✅',b:'1. Pull test on each rose.\n2. Check all suction cups are secure.\n3. To remove: Lift the edge of the suction cup. Done!',w:'❗ MAX. 80 KM/H RECOMMENDED'},
+    {n:'4',t:'ENJOY YOUR DAY! 🚗💕',b:'',w:'Nueva Vida – Moments that last forever.',f:1}
+  ],
+  fr:[
+    {n:'1',t:'PRÉPARATION 🧼',b:'Nettoyez le capot en profondeur. Doit être exempt de poussière, de graisse et de cire. Utilisez un nettoyant à vitres – les ventouses ne tiendront PAS sur les voitures fraîchement polies!',w:''},
+    {n:'2',t:'INSTALLATION DES CŒURS ❤️',b:'1. Placez les gabarits en forme de cœur sur le capot.\n2. Humidifiez légèrement la base de la ventouse (1 goutte d\'eau).\n3. Saisissez la rose à la base et appuyez fermement.\n⚠️ NE JAMAIS appuyer d\'en haut sur la fleur!',w:''},
+    {n:'3',t:'SÉCURITÉ & TEST ✅',b:'1. Tirez légèrement sur chaque rose.\n2. Vérifiez que toutes les ventouses sont bien fixées.\n3. Pour retirer : Soulevez le bord de la ventouse. Terminé!',w:'❗ MAX. 80 KM/H RECOMMANDÉ'},
+    {n:'4',t:'BON MARIAGE! 🚗💕',b:'',w:'Nueva Vida – Les moments qui restent.',f:1}
+  ],
+  es:[
+    {n:'1',t:'PREPARACIÓN 🧼',b:'Limpia el capó a fondo. Debe estar libre de polvo, grasa y cera. Usa limpiacristales – las ventosas NO aguantarán en autos recién pulidos.',w:''},
+    {n:'2',t:'INSTALACIÓN DE CORAZONES ❤️',b:'1. Coloca las plantillas de corazón en el capó.\n2. Humedece ligeramente la base de la ventosa (1 gota de agua).\n3. Agarra la rosa por la base y presiona firmemente.\n⚠️ ¡NUNCA presiones desde arriba en la flor!',w:''},
+    {n:'3',t:'SEGURIDAD & PRUEBA ✅',b:'1. Prueba de tracción en cada rosa.\n2. Verifica que todas las ventosas estén seguras.\n3. Para quitar: Levanta el borde de la ventosa. ¡Listo!',w:'❗ MÁX. 80 KM/H RECOMENDADO'},
+    {n:'4',t:'¡FELIZ DÍA ESPECIAL! 🚗💕',b:'',w:'Nueva Vida – Momentos que perduran.',f:1}
+  ],
+  it:[
+    {n:'1',t:'PREPARAZIONE 🧼',b:'Pulisci il cofano a fondo. Deve essere privo di polvere, grasso e cera. Usa un detergente per vetri – le ventose NON terranno su auto appena lucide!',w:''},
+    {n:'2',t:'INSTALLAZIONE DEI CUORI ❤️',b:'1. Posiziona i modelli a forma di cuore sul cofano.\n2. Inumidisci leggermente la base della ventosa (1 goccia d\'acqua).\n3. Afferra la rosa alla base e premi fermamente.\n⚠️ MAI premere dall\'alto sul fiore!',w:''},
+    {n:'3',t:'SICUREZZA & TEST ✅',b:'1. Test di trazione su ogni rosa.\n2. Verifica che tutte le ventose siano ben fissate.\n3. Per rimuovere: Solleva il bordo della ventosa. Fatto!',w:'❗ MAX. 80 KM/H CONSIGLIATI'},
+    {n:'4',t:'BUON MATRIMONIO! 🚗💕',b:'',w:'Nueva Vida – Momenti che rimangono.',f:1}
+  ]
+};
+const ST={de:'Support kontaktieren',en:'Contact Support',fr:'Contacter le Support',es:'Contactar Soporte',it:'Contatta il Supporto'};
+let lang='de',cur=0,timer=null;
+
+function go(l){
+  lang=l; cur=0;
+  document.getElementById('introScreen').style.display='none';
+  document.getElementById('carScreen').classList.add('active');
+  render(); show(0); adv();
+}
+function render(){
+  const c=document.getElementById('slides'); c.innerHTML='';
+  C[lang].forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='slide'+(i===0?' active':'');
+    if(s.f){
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><div class="final-title">${s.t}</div>${s.w?`<div class="warn">${s.w}</div>`:''}<a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>`;
+    } else {
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'<br>')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
+    }
+    c.appendChild(d);
+  });
+}
+function show(i){
+  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.seg').forEach((s,j)=>{
+    s.classList.remove('current','done');
+    if(j<i) s.classList.add('done'); else if(j===i) s.classList.add('current');
+  });
+  document.querySelectorAll('.slide')[i]?.classList.add('active');
+}
+function next(){if(cur<C[lang].length-1){cur++;show(cur);cur<C[lang].length-1?resetAdv():clearTimeout(timer);}}
+function prev(){if(cur>0){cur--;show(cur);resetAdv();}}
+function adv(){if(cur<C[lang].length-1)timer=setTimeout(()=>{next();adv();},5000);}
+function resetAdv(){clearTimeout(timer);adv();}
+</script>
+</body>
+</html>
