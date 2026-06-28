@@ -160,6 +160,8 @@ function go(l){
   render(); show(0);
 }
 
+let autoTimeout = null; // Variable para rastrear el timeout
+
 function render(){
   const c=document.getElementById("slides"); c.innerHTML="";
   const pb=document.getElementById("progBar"); pb.innerHTML="";
@@ -170,14 +172,6 @@ function render(){
     seg.className="seg";
     const fill=document.createElement("div");
     fill.className="fill";
-    
-    // Sincronización: animationend solo para no-final slides
-    if(i < C[lang].length - 1) {
-      fill.addEventListener("animationend", () => {
-        if(i === cur) next();
-      }, { once: false });
-    }
-    
     seg.appendChild(fill);
     pb.appendChild(seg);
 
@@ -207,6 +201,7 @@ function render(){
 }
 
 function show(i){
+  clearTimeout(autoTimeout);
   document.querySelectorAll(".slide").forEach(s=>s.classList.remove("active"));
   document.querySelectorAll(".seg").forEach((s,j)=>{
     s.classList.remove("current","done");
@@ -218,6 +213,13 @@ function show(i){
   });
   const slides = document.querySelectorAll(".slide");
   if(slides[i]) slides[i].classList.add("active");
+  
+  // Auto-avanzar a siguiente slide después de 8 segundos si no es el último
+  if(i < C[lang].length - 1){
+    autoTimeout = setTimeout(() => {
+      if(cur === i) next(); // Solo avanza si no hemos cambiado manualmente
+    }, 8000);
+  }
 }
 
 function next(){ 
