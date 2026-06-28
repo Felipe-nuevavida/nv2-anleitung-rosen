@@ -6,7 +6,7 @@
   <title>Nueva Vida - Installation Guide Rosenherzen</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: system-ui, -apple-system, sans-serif; background:#fff; overflow:hidden; }
+    body { font-family: system-ui, -apple-system, sans-serif; background:#fff; overflow:hidden; user-select: none; -webkit-user-select: none; }
     .wrap { width:100%; height:100vh; display:flex; flex-direction:column; }
 
     .intro { display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; gap:2.5rem; background:#fff; }
@@ -21,21 +21,30 @@
     .lang-btn:hover { border-color:#b8860b; transform:scale(1.08); }
     .lang-btn:active { transform:scale(0.95); }
 
-    .car-screen { display:none; flex-direction:column; width:100%; height:100%; background:#fff; }
+    .car-screen { display:none; flex-direction:column; width:100%; height:100%; background:#fff; position:relative; }
     .car-screen.active { display:flex; }
 
-    .prog-bar { width:100%; height:6px; background:#f0f0f0; display:flex; flex-shrink:0; }
-    .seg { flex:1; height:100%; background:#e8d5a3; transition:background 0.3s; }
-    .seg.done { background:#d4a017; }
-    .seg.current { background:#d4a017; }
+    /* Estilo IG Stories para la barra de progreso */
+    .prog-bar { width:100%; height:4px; display:flex; gap:6px; padding:12px 12px 0 12px; flex-shrink:0; z-index:20; }
+    .seg { flex:1; height:100%; background:rgba(212,160,23,0.25); border-radius:4px; overflow:hidden; }
+    .fill { height:100%; width:0%; background:#d4a017; border-radius:4px; }
+    
+    /* Estados de la barra */
+    .seg.done .fill { width:100%; }
+    .seg.current .fill { animation: fillUp 8s linear forwards; }
+    .is-paused .seg.current .fill { animation-play-state: paused; }
+    
+    @keyframes fillUp { from { width:0%; } to { width:100%; } }
 
     .car-content {
       flex:1; display:flex; align-items:flex-start; justify-content:center;
       padding:1rem 1.5rem; position:relative; overflow:hidden;
     }
 
-    .tap-l, .tap-r { position:absolute; top:0; width:20%; height:100%; cursor:pointer; z-index:10; }
-    .tap-l { left:0; } .tap-r { right:0; }
+    /* Zonas táctiles corregidas (25% / 75%) */
+    .tap-l, .tap-r { position:absolute; top:0; height:100%; cursor:pointer; z-index:10; }
+    .tap-l { left:0; width:25%; }
+    .tap-r { right:0; width:75%; }
 
     .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; padding-top:0.5rem; animation:fadeSlide 0.3s ease; }
     .slide.active { display:flex; }
@@ -50,11 +59,12 @@
     .divider { width:70px; height:3px; background:linear-gradient(90deg,#c8a415,#f0c93a,#c8a415); border-radius:2px; }
     .slide h2 { font-size:1.9rem; font-weight:800; color:#1a1a1a; line-height:1.2; }
     .slide p { font-size:1.35rem; line-height:1.6; color:#333; max-width:400px; }
-    .warn { font-size:1.25rem; color:#b91c1c; font-weight:800; background:#fff1f1; border:2px solid #f5c6c6; padding:0.65rem 1.2rem; border-radius:10px; display:inline-block; }
+    .warn { font-size:1.15rem; color:#b91c1c; font-weight:800; background:#fff1f1; border:2px solid #f5c6c6; padding:0.65rem 1.2rem; border-radius:10px; display:inline-block; margin-top:0.5rem; }
 
-    .logo-small { position:absolute; top:10px; right:14px; width:56px; height:56px; object-fit:contain; opacity:0.75; z-index:5; pointer-events:none; }
+    .logo-small { position:absolute; top:15px; right:14px; width:56px; height:56px; object-fit:contain; opacity:0.75; z-index:5; pointer-events:none; }
 
     .final-title { font-size:2.4rem; font-weight:900; color:#1a1a1a; line-height:1.2; }
+    .final-msg { font-size:1.3rem; font-weight:600; color:#1a1a1a; line-height:1.6; max-width:420px; margin-top:0.5rem; }
     .support-btn {
       padding:1rem 2.5rem; font-size:1.2rem;
       background:linear-gradient(135deg,#c8a415,#f0c93a,#a07810);
@@ -62,7 +72,7 @@
       font-weight:800; letter-spacing:0.03em;
       box-shadow:0 2px 12px rgba(180,130,0,0.4);
       text-decoration:none; display:inline-block; transition:all 0.2s;
-      margin-top:0.3rem;
+      margin-top:1rem; position:relative; z-index:30;
     }
     .support-btn:hover { transform:scale(1.04); }
     .support-btn:active { transform:scale(0.97); }
@@ -82,11 +92,8 @@
   </div>
 
   <div class="car-screen" id="carScreen">
-    <div class="prog-bar">
-      <div class="seg current" id="s0"></div>
-      <div class="seg" id="s1"></div>
-      <div class="seg" id="s2"></div>
-      <div class="seg" id="s3"></div>
+    <div class="prog-bar" id="progBar">
+      <!-- Generado dinámicamente por JS -->
     </div>
     <div class="car-content">
       <div class="tap-l" onclick="prev()"></div>
@@ -100,70 +107,140 @@
 <script>
 const C={
   de:[
-    {n:'1',t:'VORBEREITUNG 🧼',b:'Motorhaube gründlich reinigen. Muss staub-, fett- und wachsfrei sein. Glasreiniger nutzen – auf frisch polierten Autos halten Saugnäpfe NICHT!',w:''},
-    {n:'2',t:'MONTAGE DER HERZEN ❤️',b:'1. Herz-Schablonen auf die Haube legen.\n2. Saugnapf-Unterseite leicht befeuchten (1 Tropfen Wasser).\n3. Rose an der Basis greifen und fest andrücken.\n⚠️ NICHT von oben auf die Blüte drücken!',w:''},
-    {n:'3',t:'SICHERHEIT & TEST ✅',b:'1. Kurzer Zugtest an jeder Rose.\n2. Alle Saugnäpfe fest kontrollieren.\n3. Zum Abnehmen: Rand des Saugnapfes anheben. Fertig!',w:'❗ MAX. 80 KM/H EMPFOHLEN'},
-    {n:'4',t:'VIEL FREUDE! 🚗💕',b:'',w:'Nueva Vida – Momente, die bleiben.',f:1}
+    {n:'1',t:'BASIS FÜR DIE LIEBE 🧼',b:'Reinige die Motorhaube mit Sorgfalt. Für perfekten Halt muss die Fläche absolut staub-, fett- und wachsfrei sein. (Nutze am besten Glasreiniger).',w:'❗ WICHTIG: KEIN WACHS ODER POLITUR!'},
+    {n:'2',t:'HERZEN PLATZIEREN ❤️',b:'1. Lege die Herz-Schablonen auf.  
+2. Feuchte die Saugnäpfe minimal an.  
+3. Greife die Rose an der Basis und drücke sie fest.',w:'⚠️ NUR DIE BASIS DRÜCKEN, NIE DIE BLÜTE!'},
+    {n:'3',t:'SICHERER HALT ✅',b:'Prüfe jede Rose mit einem sanften Zug. Zum spurlosen Abnehmen nach der Feier einfach den Rand des Saugnapfes anheben.',w:'❗ MAX. 80 KM/H – FÜR EURE SICHERHEIT'},
+    {n:'4',t:'UNVERGESSLICHE MOMENTE 🚗💕',b:'Alles ist bereit. Fahrt sicher und genießt euren großen Tag.',w:'Nueva Vida – Momente, die bleiben.',f:1}
   ],
   en:[
-    {n:'1',t:'PREPARATION 🧼',b:'Clean the hood thoroughly. Must be dust-, grease- and wax-free. Use glass cleaner – suction cups will NOT hold on freshly polished cars!',w:''},
-    {n:'2',t:'INSTALLING THE HEARTS ❤️',b:'1. Place heart templates on the hood.\n2. Slightly dampen suction cup underside (1 drop of water).\n3. Grip the rose at the base and press firmly.\n⚠️ NEVER press from the top on the flower!',w:''},
-    {n:'3',t:'SAFETY & TEST ✅',b:'1. Pull test on each rose.\n2. Check all suction cups are secure.\n3. To remove: Lift the edge of the suction cup. Done!',w:'❗ MAX. 80 KM/H RECOMMENDED'},
-    {n:'4',t:'ENJOY YOUR DAY! 🚗💕',b:'',w:'Nueva Vida – Moments that last forever.',f:1}
+    {n:'1',t:'BASE FOR LOVE 🧼',b:'Clean the hood with care. For perfect grip, the surface must be completely free of dust, grease, and wax. (Glass cleaner works best).',w:'❗ CRITICAL: NO WAX OR POLISH!'},
+    {n:'2',t:'PLACING THE HEARTS ❤️',b:'1. Place the heart templates.  
+2. Slightly moisten the suction cups.  
+3. Grip the rose at the base and press firmly.',w:'⚠️ PRESS ONLY THE BASE, NEVER THE FLOWER!'},
+    {n:'3',t:'SECURE HOLD ✅',b:'Test each rose with a gentle pull. To remove without a trace, simply lift the edge of the suction cup.',w:'❗ MAX. 80 KM/H (50 MPH) – SAFETY FIRST'},
+    {n:'4',t:'UNFORGETTABLE MOMENTS 🚗💕',b:'Everything is ready. Drive safely and enjoy your big day.',w:'Nueva Vida – Moments that last forever.',f:1}
   ],
   fr:[
-    {n:'1',t:'PRÉPARATION 🧼',b:'Nettoyez le capot en profondeur. Doit être exempt de poussière, de graisse et de cire. Utilisez un nettoyant à vitres – les ventouses ne tiendront PAS sur les voitures fraîchement polies!',w:''},
-    {n:'2',t:'INSTALLATION DES CŒURS ❤️',b:'1. Placez les gabarits en forme de cœur sur le capot.\n2. Humidifiez légèrement la base de la ventouse (1 goutte d\'eau).\n3. Saisissez la rose à la base et appuyez fermement.\n⚠️ NE JAMAIS appuyer d\'en haut sur la fleur!',w:''},
-    {n:'3',t:'SÉCURITÉ & TEST ✅',b:'1. Tirez légèrement sur chaque rose.\n2. Vérifiez que toutes les ventouses sont bien fixées.\n3. Pour retirer : Soulevez le bord de la ventouse. Terminé!',w:'❗ MAX. 80 KM/H RECOMMANDÉ'},
-    {n:'4',t:'BON MARIAGE! 🚗💕',b:'',w:'Nueva Vida – Les moments qui restent.',f:1}
+    {n:'1',t:'BASE POUR L\'AMOUR 🧼',b:'Nettoyez le capot avec soin. Pour une adhérence parfaite, la surface doit être sans poussière, graisse ni cire. (Utilisez un nettoyant vitres).',w:'❗ ESSENTIEL : NI CIRE NI POLISH !'},
+    {n:'2',t:'PLACER LES CŒURS ❤️',b:'1. Placez les gabarits.  
+2. Humidifiez légèrement les ventouses.  
+3. Saisissez la rose par la base et appuyez fermement.',w:'⚠️ APPUYEZ SUR LA BASE, JAMAIS SUR LA FLEUR !'},
+    {n:'3',t:'MAINTIEN SÉCURISÉ ✅',b:'Testez chaque rose en tirant doucement. Pour retirer sans trace, soulevez simplement le bord de la ventouse.',w:'❗ MAX. 80 KM/H – LA SÉCURITÉ AVANT TOUT'},
+    {n:'4',t:'MOMENTS INOUBLIABLES 🚗💕',b:'Tout est prêt. Conduisez prudemment et profitez de votre grand jour.',w:'Nueva Vida – Les moments qui restent.',f:1}
   ],
   es:[
-    {n:'1',t:'PREPARACIÓN 🧼',b:'Limpia el capó a fondo. Debe estar libre de polvo, grasa y cera. Usa limpiacristales – las ventosas NO aguantarán en autos recién pulidos.',w:''},
-    {n:'2',t:'INSTALACIÓN DE CORAZONES ❤️',b:'1. Coloca las plantillas de corazón en el capó.\n2. Humedece ligeramente la base de la ventosa (1 gota de agua).\n3. Agarra la rosa por la base y presiona firmemente.\n⚠️ ¡NUNCA presiones desde arriba en la flor!',w:''},
-    {n:'3',t:'SEGURIDAD & PRUEBA ✅',b:'1. Prueba de tracción en cada rosa.\n2. Verifica que todas las ventosas estén seguras.\n3. Para quitar: Levanta el borde de la ventosa. ¡Listo!',w:'❗ MÁX. 80 KM/H RECOMENDADO'},
-    {n:'4',t:'¡FELIZ DÍA ESPECIAL! 🚗💕',b:'',w:'Nueva Vida – Momentos que perduran.',f:1}
+    {n:'1',t:'BASE PARA EL AMOR 🧼',b:'Limpia el capó con mimo. Para un agarre perfecto, la superficie debe estar libre de polvo, grasa y cera. (Usa limpiacristales).',w:'❗ VITAL: ¡CERO CERA O PULIMENTO!'},
+    {n:'2',t:'COLOCAR LOS CORAZONES ❤️',b:'1. Sitúa las plantillas.  
+2. Humedece mínimamente las ventosas.  
+3. Agarra la rosa por la base y presiona con firmeza.',w:'⚠️ ¡PRESIONA SOLO LA BASE, NUNCA LA FLOR!'},
+    {n:'3',t:'AGARRE SEGURO ✅',b:'Comprueba cada rosa con un suave tirón. Para retirarlas sin dejar rastro, simplemente levanta el borde de la ventosa.',w:'❗ MÁX. 80 KM/H – LA SEGURIDAD ES LO PRIMERO'},
+    {n:'4',t:'MOMENTOS INOLVIDABLES 🚗💕',b:'Todo está listo. Conducid seguros y disfrutad de vuestro gran día.',w:'Nueva Vida – Momentos que perduran.',f:1}
   ],
   it:[
-    {n:'1',t:'PREPARAZIONE 🧼',b:'Pulisci il cofano a fondo. Deve essere privo di polvere, grasso e cera. Usa un detergente per vetri – le ventose NON terranno su auto appena lucide!',w:''},
-    {n:'2',t:'INSTALLAZIONE DEI CUORI ❤️',b:'1. Posiziona i modelli a forma di cuore sul cofano.\n2. Inumidisci leggermente la base della ventosa (1 goccia d\'acqua).\n3. Afferra la rosa alla base e premi fermamente.\n⚠️ MAI premere dall\'alto sul fiore!',w:''},
-    {n:'3',t:'SICUREZZA & TEST ✅',b:'1. Test di trazione su ogni rosa.\n2. Verifica che tutte le ventose siano ben fissate.\n3. Per rimuovere: Solleva il bordo della ventosa. Fatto!',w:'❗ MAX. 80 KM/H CONSIGLIATI'},
-    {n:'4',t:'BUON MATRIMONIO! 🚗💕',b:'',w:'Nueva Vida – Momenti che rimangono.',f:1}
+    {n:'1',t:'BASE PER L\'AMORE 🧼',b:'Pulisci il cofano con cura. Per una presa perfetta, la superficie deve essere priva di polvere, grasso e cera. (Usa un lavavetri).',w:'❗ CRITICO: NIENTE CERA O LUCIDO!'},
+    {n:'2',t:'POSIZIONARE I CUORI ❤️',b:'1. Posiziona i modelli.  
+2. Inumidisci leggermente le ventose.  
+3. Afferra la rosa alla base e premi saldamente.',w:'⚠️ PREMI SOLO LA BASE, MAI IL FIORE!'},
+    {n:'3',t:'PRESA SICURA ✅',b:'Testa ogni rosa con una leggera trazione. Per rimuovere senza tracce, solleva semplicemente il bordo della ventosa.',w:'❗ MAX. 80 KM/H – LA SICUREZZA PRIMA DI TUTTO'},
+    {n:'4',t:'MOMENTI INDIMENTICABILI 🚗💕',b:'Tutto è pronto. Guidate con prudenza e godetevi il vostro grande giorno.',w:'Nueva Vida – Momenti che rimangono.',f:1}
   ]
 };
 const ST={de:'Support kontaktieren',en:'Contact Support',fr:'Contacter le Support',es:'Contactar Soporte',it:'Contatta il Supporto'};
-let lang='de',cur=0,timer=null;
+let lang='de',cur=0;
 
 function go(l){
   lang=l; cur=0;
   document.getElementById('introScreen').style.display='none';
   document.getElementById('carScreen').classList.add('active');
-  render(); show(0); adv();
+  render(); show(0);
 }
+
 function render(){
   const c=document.getElementById('slides'); c.innerHTML='';
+  const pb=document.getElementById('progBar'); pb.innerHTML='';
+  
   C[lang].forEach((s,i)=>{
+    // Crear segmento de barra de progreso
+    const seg=document.createElement('div');
+    seg.className='seg';
+    const fill=document.createElement('div');
+    fill.className='fill';
+    
+    // Sincronización: animationend solo para no-final slides
+    if(i < C[lang].length - 1) {
+      fill.addEventListener('animationend', () => {
+        if(i === cur) next();
+      }, { once: false });
+    }
+    
+    seg.appendChild(fill);
+    pb.appendChild(seg);
+
+    // Crear diapositiva
     const d=document.createElement('div');
-    d.className='slide'+(i===0?' active':'');
+    d.className='slide';
     if(s.f){
-      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><div class="final-title">${s.t}</div>${s.w?`<div class="warn">${s.w}</div>`:''}<a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>`;
+      d.innerHTML=`
+        <div class="step-num">${s.n}</div>
+        <div class="divider"></div>
+        <div class="final-title">${s.t}</div>
+        ${s.b?`<div class="final-msg">${s.b}</div>`:''}
+        ${s.w?`<div class="warn" style="margin-top:1rem; background:none; border:none; color:#d4a017;">${s.w}</div>`:''}
+        <a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>
+      `;
     } else {
-      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'<br>')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
+      d.innerHTML=`
+        <div class="step-num">${s.n}</div>
+        <div class="divider"></div>
+        <h2>${s.t}</h2>
+        ${s.b?`<p>${s.b}</p>`:''}
+        ${s.w?`<div class="warn">${s.w}</div>`:''}
+      `;
     }
     c.appendChild(d);
   });
 }
+
 function show(i){
   document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.seg').forEach((s,j)=>{
     s.classList.remove('current','done');
-    if(j<i) s.classList.add('done'); else if(j===i) s.classList.add('current');
+    if(j<i) s.classList.add('done'); 
+    else if(j===i) {
+      void s.offsetWidth; // Fuerza reflow para reiniciar animación
+      s.classList.add('current');
+    }
   });
-  document.querySelectorAll('.slide')[i]?.classList.add('active');
+  const slides = document.querySelectorAll('.slide');
+  if(slides[i]) slides[i].classList.add('active');
 }
-function next(){if(cur<C[lang].length-1){cur++;show(cur);cur<C[lang].length-1?resetAdv():clearTimeout(timer);}}
-function prev(){if(cur>0){cur--;show(cur);resetAdv();}}
-function adv(){if(cur<C[lang].length-1)timer=setTimeout(()=>{next();adv();},5000);}
-function resetAdv(){clearTimeout(timer);adv();}
+
+function next(){ 
+  if(cur < C[lang].length - 1){ 
+    cur++; 
+    show(cur); 
+  } 
+}
+
+function prev(){ 
+  if(cur > 0){ 
+    cur--; 
+    show(cur); 
+  } 
+}
+
+// Lógica de Pausa al mantener pulsado (Touch y Mouse)
+const carScreen = document.getElementById('carScreen');
+
+carScreen.addEventListener('mousedown', () => carScreen.classList.add('is-paused'));
+carScreen.addEventListener('mouseup', () => carScreen.classList.remove('is-paused'));
+carScreen.addEventListener('mouseleave', () => carScreen.classList.remove('is-paused'));
+carScreen.addEventListener('touchstart', () => carScreen.classList.add('is-paused'), { passive: true });
+carScreen.addEventListener('touchend', () => carScreen.classList.remove('is-paused'), { passive: true });
+carScreen.addEventListener('touchcancel', () => carScreen.classList.remove('is-paused'), { passive: true });
+
 </script>
 </body>
 </html>
