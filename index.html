@@ -34,7 +34,8 @@
       padding:3rem 1.5rem 1rem 1.5rem; position:relative; overflow:hidden;
     }
 
-    .tap-l, .tap-r { position:absolute; top:0; width:20%; height:100%; cursor:pointer; z-index:10; }
+    /* Zonas de toque ampliadas al 50% para que respondan rápido en toda la pantalla */
+    .tap-l, .tap-r { position:absolute; top:0; width:50%; height:100%; cursor:pointer; z-index:10; -webkit-tap-highlight-color: transparent; }
     .tap-l { left:0; } .tap-r { right:0; }
 
     .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; animation:fadeSlide 0.3s ease; }
@@ -63,6 +64,7 @@
       box-shadow:0 2px 12px rgba(180,130,0,0.4);
       text-decoration:none; display:inline-block; transition:all 0.2s;
       margin-top:0.3rem;
+      position:relative; z-index:20; /* Asegura que el botón se pueda clicar por encima de las zonas táctiles */
     }
     .support-btn:hover { transform:scale(1.04); }
     .support-btn:active { transform:scale(0.97); }
@@ -71,9 +73,10 @@
 <body>
 <div class="wrap">
   <div class="intro" id="introScreen">
-    <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/Logo_gold.png" class="logo-img" alt="Nueva Vida">
+    <!-- Corrección: logo_gold.png en minúsculas -->
+    <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/logo_gold.png" class="logo-img" alt="Nueva Vida">
     <div class="lang-row">
-      <button class="lang-btn" onclick="go('de')">🇩🇪</button>
+      <button class="lang-btn" onclick="go('de' )">🇩🇪</button>
       <button class="lang-btn" onclick="go('en')">🇬🇧</button>
       <button class="lang-btn" onclick="go('fr')">🇫🇷</button>
       <button class="lang-btn" onclick="go('es')">🇪🇸</button>
@@ -90,9 +93,10 @@
     </div>
     <div class="car-content">
       <div class="tap-l" onclick="prev()"></div>
-      <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/Logo_gold.png" class="logo-small" alt="" >
+      <!-- Corrección: logo_gold.png en minúsculas -->
+      <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/logo_gold.png" class="logo-small" alt="" >
       <div id="slides" style="width:100%"></div>
-      <div class="tap-r" onclick="next()"></div>
+      <div class="tap-r" onclick="next( )"></div>
     </div>
   </div>
 </div>
@@ -137,8 +141,11 @@ function go(l){
   lang=l; cur=0;
   document.getElementById('introScreen').style.display='none';
   document.getElementById('carScreen').classList.add('active');
-  render(); show(0); adv();
+  render(); 
+  show(0); 
+  startTimer();
 }
+
 function render(){
   const c=document.getElementById('slides'); c.innerHTML='';
   C[lang].forEach((s,i)=>{
@@ -147,11 +154,13 @@ function render(){
     if(s.f){
       d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><div class="final-title">${s.t}</div>${s.w?`<div class="warn">${s.w}</div>`:''}<a href="mailto:info@nuevavida-ftv.de" class="support-btn">${ST[lang]}</a>`;
     } else {
-      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'<br>')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
+      d.innerHTML=`<div class="step-num">${s.n}</div><div class="divider"></div><h2>${s.t}</h2>${s.b?`<p>${s.b.replace(/\n/g,'  
+')}</p>`:''}${s.w?`<div class="warn">${s.w}</div>`:''}`;
     }
     c.appendChild(d);
   });
 }
+
 function show(i){
   document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.seg').forEach((s,j)=>{
@@ -160,21 +169,32 @@ function show(i){
   });
   document.querySelectorAll('.slide')[i]?.classList.add('active');
 }
-function next(){if(cur<C[lang].length-1){cur++;show(cur);cur<C[lang].length-1?resetAdv():clearTimeout(timer);}}
-function prev(){if(cur>0){cur--;show(cur);resetAdv();}}
-function adv(){if(cur<C[lang].length-1)timer=setTimeout(()=>{next();adv();},5000);}
-function resetAdv(){clearTimeout(timer);adv();}
 
-// Pausa al tocar/pulsar cualquier parte de la pantalla
-const carScreen = document.getElementById('carScreen');
+// Lógica de temporizador corregida para evitar bucles exponenciales
+function startTimer() {
+  clearTimeout(timer);
+  if (cur < C[lang].length - 1) {
+    timer = setTimeout(() => {
+      next();
+    }, 5000);
+  }
+}
 
-carScreen.addEventListener('mousedown', () => { clearTimeout(timer); });
-carScreen.addEventListener('mouseup', () => { resetAdv(); });
-carScreen.addEventListener('mouseleave', () => { resetAdv(); });
-carScreen.addEventListener('touchstart', () => { clearTimeout(timer); }, { passive: true });
-carScreen.addEventListener('touchend', () => { resetAdv(); }, { passive: true });
-carScreen.addEventListener('touchcancel', () => { resetAdv(); }, { passive: true });
+function next(){
+  if(cur < C[lang].length - 1){
+    cur++;
+    show(cur);
+    startTimer();
+  }
+}
 
+function prev(){
+  if(cur > 0){
+    cur--;
+    show(cur);
+    startTimer();
+  }
+}
 </script>
 </body>
 </html>
