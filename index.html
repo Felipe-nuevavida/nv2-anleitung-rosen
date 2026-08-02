@@ -275,23 +275,24 @@ if(tapR) {
     isHorizontal = null;
   }
 
-  // Touch (móvil)
-  slidesWrap.addEventListener('touchstart', e=>{
+  // Touch (móvil) — enganchado a todo el área visible, no solo al texto,
+  // para que el swipe funcione también sobre las zonas tap-l/tap-r y el espacio vacío
+  content.addEventListener('touchstart', e=>{
     const t = e.touches[0];
     onStart(t.clientX, t.clientY);
   }, { passive:true });
 
-  slidesWrap.addEventListener('touchmove', e=>{
+  content.addEventListener('touchmove', e=>{
     const t = e.touches[0];
     onMove(t.clientX, t.clientY);
   }, { passive:true });
 
-  slidesWrap.addEventListener('touchend', onEnd, { passive:true });
-  slidesWrap.addEventListener('touchcancel', onEnd, { passive:true });
+  content.addEventListener('touchend', onEnd, { passive:true });
+  content.addEventListener('touchcancel', onEnd, { passive:true });
 
   // Mouse drag (desktop, opcional pero coherente)
   let mouseDown = false;
-  slidesWrap.addEventListener('mousedown', e=>{
+  content.addEventListener('mousedown', e=>{
     mouseDown = true;
     onStart(e.clientX, e.clientY);
   });
