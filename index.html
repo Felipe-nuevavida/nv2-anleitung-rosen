@@ -32,12 +32,15 @@
     .car-content {
       flex:1; display:flex; align-items:flex-start; justify-content:center;
       padding:3rem 1.5rem 1rem 1.5rem; position:relative; overflow:hidden;
+      touch-action: pan-y;
     }
 
     .tap-l, .tap-r { position:absolute; top:0; width:20%; height:100%; cursor:pointer; z-index:10; }
     .tap-l { left:0; } .tap-r { right:0; }
 
-    .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; animation:fadeSlide 0.3s ease; }
+    #slides { width:100%; touch-action: pan-y; user-select:none; }
+
+    .slide { display:none; text-align:center; width:100%; flex-direction:column; align-items:center; gap:0.85rem; animation:fadeSlide 0.3s ease; will-change:transform,opacity; }
     .slide.active { display:flex; }
     @keyframes fadeSlide { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 
@@ -66,6 +69,13 @@
     }
     .support-btn:hover { transform:scale(1.04); }
     .support-btn:active { transform:scale(0.97); }
+
+    /* Indicador sutil de swipe (como galería móvil) */
+    .swipe-hint {
+      position:absolute; bottom:14px; left:50%; transform:translateX(-50%);
+      font-size:0.75rem; color:#b3a06a; opacity:0.7; pointer-events:none;
+      display:flex; align-items:center; gap:0.3rem; z-index:6;
+    }
   </style>
 </head>
 <body>
@@ -88,7 +98,7 @@
       <div class="seg" id="s2"></div>
       <div class="seg" id="s3"></div>
     </div>
-    <div class="car-content">
+    <div class="car-content" id="carContent">
       <div class="tap-l" onclick="prev()"></div>
       <img src="https://raw.githubusercontent.com/Felipe-nuevavida/nv2-anleitung-rosen/main/logo_gold.png" class="logo-small" alt="" >
       <div id="slides" style="width:100%"></div>
@@ -201,6 +211,107 @@ if(tapR) {
   tapR.addEventListener('touchstart', () => clearTimeout(timer), { passive: true });
 }
 
+/* ============================================
+   SWIPE GESTURES estilo galería de fotos móvil
+   - Deslizar a la izquierda -> siguiente paso
+   - Deslizar a la derecha   -> paso anterior
+   - Con feedback visual de arrastre (drag)
+   - Compatible con touch y con mouse (drag desktop)
+   ============================================ */
+(function(){
+  const content = document.getElementById('carContent');
+  const slidesWrap = document.getElementById('slides');
+
+  const SWIPE_THRESHOLD = 50;   // px mínimos para considerar swipe
+  const MAX_DRAG_VISUAL = 120;  // límite visual de arrastre
+
+  let startX = 0, startY = 0, currentX = 0;
+  let dragging = false;
+  let isHorizontal = null; // null hasta decidir dirección del gesto
+
+  function getActiveSlide(){
+    return document.querySelector('.slide.active');
+  }
+
+  function onStart(x, y){
+    startX = x; startY = y; currentX = x;
+    dragging = true; isHorizontal = null;
+    clearTimeout(timer); // pausar auto-advance mientras el usuario interactúa
+  }
+
+  function onMove(x, y){
+    if(!dragging) return;
+    const dx = x - startX;
+    const dy = y - startY;
+
+    // Decide si el gesto es horizontal (swipe) o vertical (scroll normal)
+    if(isHorizontal === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)){
+      isHorizontal = Math.abs(dx) > Math.abs(dy);
+    }
+    if(!isHorizontal) return; // deja pasar el scroll vertical normal
+
+    currentX = x;
+    const slide = getActiveSlide();
+    if(slide){
+      const clamped = Math.max(-MAX_DRAG_VISUAL, Math.min(MAX_DRAG_VISUAL, dx));
+      slide.style.transform = `translateX(${clamped}px)`;
+      slide.style.opacity = String(1 - Math.abs(clamped) / (MAX_DRAG_VISUAL * 1.6));
+    }
+  }
+
+  function onEnd(){
+    if(!dragging) return;
+    dragging = false;
+
+    const slide = getActiveSlide();
+    const dx = currentX - startX;
+
+    if(slide){
+      slide.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+      slide.style.transform = '';
+      slide.style.opacity = '';
+      setTimeout(()=>{ if(slide) slide.style.transition = ''; }, 260);
+    }
+
+    if(isHorizontal && Math.abs(dx) > SWIPE_THRESHOLD){
+      if(dx < 0) next();   // swipe izquierda -> siguiente
+      else prev();          // swipe derecha -> anterior
+    } else {
+      resetAdv(); // no fue swipe suficiente, reanuda auto-advance
+    }
+    isHorizontal = null;
+  }
+
+  // Touch (móvil)
+  slidesWrap.addEventListener('touchstart', e=>{
+    const t = e.touches[0];
+    onStart(t.clientX, t.clientY);
+  }, { passive:true });
+
+  slidesWrap.addEventListener('touchmove', e=>{
+    const t = e.touches[0];
+    onMove(t.clientX, t.clientY);
+  }, { passive:true });
+
+  slidesWrap.addEventListener('touchend', onEnd, { passive:true });
+  slidesWrap.addEventListener('touchcancel', onEnd, { passive:true });
+
+  // Mouse drag (desktop, opcional pero coherente)
+  let mouseDown = false;
+  slidesWrap.addEventListener('mousedown', e=>{
+    mouseDown = true;
+    onStart(e.clientX, e.clientY);
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!mouseDown) return;
+    onMove(e.clientX, e.clientY);
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!mouseDown) return;
+    mouseDown = false;
+    onEnd();
+  });
+})();
 </script>
 </body>
 </html>
